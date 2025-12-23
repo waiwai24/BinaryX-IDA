@@ -122,9 +122,9 @@ def extract_strings(min_length: int = 4) -> List[dict]:
 
     return strings
 def is_call_instruction(head_ea: int) -> bool:
-        
+
     mnem = idc.print_insn_mnem(head_ea)
-    call_mnemonics = ['call', 'bl', 'blr', 'jal', 'jalr']
+    call_mnemonics = ['call', 'bl', 'blr', 'jal', 'jalr', 'jmp', 'b', 'j']
     return mnem and mnem.lower() in call_mnemonics
 
 def get_function_start(target_ea: int) -> int:
@@ -135,6 +135,19 @@ def get_function_start(target_ea: int) -> int:
     if target_func:
         return target_func.start_ea
     return target_ea
+
+
+def is_tail_call_jmp(head_ea: int, target_ea: int, func_starts: Set[int], import_map: Dict[int, str]) -> bool:
+    mnem = idc.print_insn_mnem(head_ea)
+    if not mnem or mnem.lower() not in ['jmp', 'b', 'j']:
+        return False
+
+    target_func_start = get_function_start(target_ea)
+
+    if target_func_start in func_starts or target_ea in import_map or target_func_start in import_map:
+        return True
+
+    return False
 
 
 def determine_call_type(head_ea: int, xref_type: int) -> str:
@@ -189,35 +202,63 @@ def extract_calls(address_to_name: Dict[int, str], imports: List[dict] = None) -
 
         for head_ea in idautils.Heads(func.start_ea, func.end_ea):
             try:
-                if not is_call_instruction(head_ea):
+                mnem = idc.print_insn_mnem(head_ea)
+                if not mnem:
                     continue
 
                 for xref in idautils.XrefsFrom(head_ea, 0):
-                    if xref.type not in [ida_xref.fl_CN, ida_xref.fl_CF]:
-                        continue
-
                     target_ea = xref.to
                     target_func_start = get_function_start(target_ea)
 
                     is_internal = target_func_start in func_starts
                     is_import = target_ea in import_map or target_func_start in import_map
 
-                    if not is_internal and not is_import:
-                        continue
+                    if xref.type in [ida_xref.fl_CN, ida_xref.fl_CF]:
+                        if not is_call_instruction(head_ea):
+                            continue
 
-                    to_addr = target_func_start if is_internal else target_ea
-                    call_key = (func_ea, to_addr)
+                        if mnem.lower() in ['jmp', 'b', 'j']:
+                            if not is_tail_call_jmp(head_ea, target_ea, func_starts, import_map):
+                                continue
 
-                    if call_key in seen_calls:
-                        continue
-                    seen_calls.add(call_key)
+                        if not is_internal and not is_import:
+                            continue
 
-                    calls.append({
-                        'from_address': f'0x{func_ea:x}',
-                        'to_address': f'0x{to_addr:x}',
-                        'offset': f'0x{head_ea:x}',
-                        'type': determine_call_type(head_ea, xref.type)
-                    })
+                        to_addr = target_func_start if is_internal else target_ea
+                        call_key = (func_ea, to_addr)
+
+                        if call_key in seen_calls:
+                            continue
+                        seen_calls.add(call_key)
+
+                        calls.append({
+                            'from_address': f'0x{func_ea:x}',
+                            'to_address': f'0x{to_addr:x}',
+                            'offset': f'0x{head_ea:x}',
+                            'type': determine_call_type(head_ea, xref.type)
+                        })
+
+                    elif xref.type in [ida_xref.dr_O, ida_xref.dr_R]:
+                        if not is_internal:
+                            continue
+
+                        if mnem.lower() not in ['lea', 'mov', 'adr', 'adrp', 'ldr']:
+                            continue
+
+                        to_addr = target_func_start
+                        call_key = (func_ea, to_addr)
+
+                        if call_key in seen_calls:
+                            continue
+                        seen_calls.add(call_key)
+
+                        calls.append({
+                            'from_address': f'0x{func_ea:x}',
+                            'to_address': f'0x{to_addr:x}',
+                            'offset': f'0x{head_ea:x}',
+                            'type': 'callback'
+                        })
+
             except Exception:
                 continue
 

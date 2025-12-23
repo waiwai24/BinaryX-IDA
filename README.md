@@ -8,7 +8,7 @@ The information included in binary file parsing consists of
 
 * Binary Information
 * Function Analysis
-* Call: direct / indirect / tail
+* Call Relationship Detection: direct / indirect / tail / callback
 * String Extraction
 
 ## Usage
@@ -90,7 +90,8 @@ Call Types:
 |------|-------------|---------|
 | `direct` | Direct function call | `call 0x401000` |
 | `indirect` | Call through register/memory | `call rax`, `call [rip+0x1000]` |
-| `tail` | Tail call optimization | `call func; ret` |
+| `tail` | Tail call optimization (JMP to function) | `jmp func` |
+| `callback` | Function address passed as parameter | `lea rsi, func` |
 
 ## Changelog
 
@@ -104,7 +105,7 @@ See [CHANGELOG.md](CHANGELOG.md)
 
 ## Contact
 
- **Issues**: GitHub Issues
+ **Issues**: [GitHub Issues](https://github.com/waiwai24/BinaryX-IDA/issues/new)
 
 ## License
 
