@@ -1,6 +1,6 @@
 # BinaryX-IDA
 
-Export comprehensive binary analysis data from IDA Pro to JSON format for Neo4j graph database visualization and analysis.
+Export comprehensive binary analysis data from IDA Pro to JSON format for Neo4j graph database visualization and analysis, also supports binary disassembly export.
 
 ## Features
 
@@ -10,6 +10,9 @@ The information included in binary file parsing consists of
 * Function Analysis
 * Call Relationship Detection: direct / indirect / tail / callback
 * String Extraction
+* Decompiled Code Export (with Hex-Rays)
+* Memory Dump Export
+* Import/Export Table Export
 
 ## Usage
 
@@ -20,6 +23,10 @@ Prerequisites:
 
 You should have IDA Pro installed and Python 3.11+ available in your system.Then you can import the generated data into the BinaryX-Graph.
 
+## JSON Export for Graph Analysis (main.py)
+
+Export binary analysis data to JSON format for Neo4j graph database import.
+
 ```bash
 # Basic usage
 python src/main.py -f binary.exe -o output.json
@@ -27,8 +34,7 @@ python src/main.py -f binary.exe -o output.json
 # With custom string length filter
 python src/main.py -f sample.dll -o output.json --min-string-length 6
 ```
-
-## Output Format
+Output Format:
 
 ```json
 {
@@ -83,7 +89,6 @@ python src/main.py -f sample.dll -o output.json --min-string-length 6
   ]
 }
 ```
-
 Call Types:
 
 | Type | Description | Example |
@@ -92,6 +97,29 @@ Call Types:
 | `indirect` | Call through register/memory | `call rax`, `call [rip+0x1000]` |
 | `tail` | Tail call optimization (JMP to function) | `jmp func` |
 | `callback` | Function address passed as parameter | `lea rsi, func` |
+
+## Comprehensive Export for AI Analysis (ida_export.py)
+
+Export detailed analysis data in multiple formats for AI analysis and reverse engineering.
+
+```bash
+# Headless mode (recommended for automation)
+python src/ida_export.py "binary.exe" [options]
+
+# Common options
+--no-memory        # Skip memory export (faster)
+--no-decompile     # Skip decompilation (if no Hex-Rays)
+--strings-only     # Export strings only
+--verbose          # Show detailed output
+-o /path/to/output # Custom output directory
+```
+
+## Thanks
+
+Some inspiration or code comes from：
+
+* IDA-NO-MCP: <https://github.com/P4nda0s/IDA-NO-MCP>
+* haruspex: <https://github.com/0xdea/haruspex>
 
 ## Changelog
 
@@ -102,6 +130,8 @@ See [CHANGELOG.md](CHANGELOG.md)
 - [ ] Classify functions according to their complexity
 - [ ] Enhanced Invocation analysis
 - [ ] Batch processing
+- [ ] Integration with AI analysis pipelines
+- [ ] Performance optimization for large binaries
 
 ## Contact
 
