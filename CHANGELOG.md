@@ -9,8 +9,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 * New `ida_export.py` module for comprehensive AI analysis export
-* Support for detecting LEA, MOV, ADR, ADRP, and LDR instructions that load function addresses
-* Improved call relationship detection for callback-heavy code patterns
+
+## [0.1.1] - 2025-12-23
 
 ### Fixed
 
@@ -24,6 +24,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * Refactored `extract_calls` function to handle both code references (calls) and data references (callbacks)
 * Added `is_tail_call_jmp` function to validate JMP instructions as tail calls
 * Added new call type "callback" for function pointer references
+
+### Added
+
+* Support for detecting LEA, MOV, ADR, ADRP, and LDR instructions that load function addresses
+* Improved call relationship detection for callback-heavy code patterns
 
 ## [0.1.0] - 2025-12-23
 
